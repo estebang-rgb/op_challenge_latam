@@ -1,10 +1,11 @@
-import pandas as pd
-import numpy as np
 from datetime import datetime
-from typing import Tuple, Union, List
+from typing import List, Tuple, Union
 
+import numpy as np
+import pandas as pd
 import xgboost as xgb
 from sklearn.utils import shuffle
+
 
 class DelayModel:
 
@@ -19,11 +20,11 @@ class DelayModel:
         "MES_4",
         "MES_11",
         "OPERA_Sky Airline",
-        "OPERA_Copa Air"
+        "OPERA_Copa Air",
     ]
 
     def __init__(self):
-        self._model = None # Model should be saved in this attribute.
+        self._model = None  # Model should be saved in this attribute.
 
     @staticmethod
     def _get_period_day(date_str: str) -> str:
@@ -37,30 +38,30 @@ class DelayModel:
             str: Period of day ('mañana', 'tarde', 'noche')
         """
         try:
-            date_time = datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S').time()
+            date_time = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S").time()
 
             # Define time ranges
-            morning_start = datetime.strptime("05:00", '%H:%M').time()
-            morning_end = datetime.strptime("11:59", '%H:%M').time()
-            afternoon_start = datetime.strptime("12:00", '%H:%M').time()
-            afternoon_end = datetime.strptime("18:59", '%H:%M').time()
-            evening_start = datetime.strptime("19:00", '%H:%M').time()
-            evening_end = datetime.strptime("23:59", '%H:%M').time()
-            night_start = datetime.strptime("00:00", '%H:%M').time()
-            night_end = datetime.strptime("04:59", '%H:%M').time()
+            morning_start = datetime.strptime("05:00", "%H:%M").time()
+            morning_end = datetime.strptime("11:59", "%H:%M").time()
+            afternoon_start = datetime.strptime("12:00", "%H:%M").time()
+            afternoon_end = datetime.strptime("18:59", "%H:%M").time()
+            evening_start = datetime.strptime("19:00", "%H:%M").time()
+            evening_end = datetime.strptime("23:59", "%H:%M").time()
+            night_start = datetime.strptime("00:00", "%H:%M").time()
+            night_end = datetime.strptime("04:59", "%H:%M").time()
 
             if morning_start <= date_time <= morning_end:
-                return 'mañana'
+                return "mañana"
             elif afternoon_start <= date_time <= afternoon_end:
-                return 'tarde'
+                return "tarde"
             elif evening_start <= date_time <= evening_end:
-                return 'noche'
+                return "noche"
             elif night_start <= date_time <= night_end:
-                return 'noche'
+                return "noche"
             else:
-                return 'noche'  # Default to night for edge cases
+                return "noche"  # Default to night for edge cases
         except (ValueError, AttributeError):
-            return 'noche'  # Default for invalid dates
+            return "noche"  # Default for invalid dates
 
     @staticmethod
     def _is_high_season(fecha: str) -> int:
@@ -74,7 +75,7 @@ class DelayModel:
             int: 1 if high season, 0 otherwise
         """
         try:
-            fecha_dt = datetime.strptime(fecha, '%Y-%m-%d %H:%M:%S')
+            fecha_dt = datetime.strptime(fecha, "%Y-%m-%d %H:%M:%S")
             year = fecha_dt.year
 
             # Define high season periods
@@ -110,17 +111,15 @@ class DelayModel:
             float: Difference in minutes
         """
         try:
-            fecha_o = datetime.strptime(row['Fecha-O'], '%Y-%m-%d %H:%M:%S')
-            fecha_i = datetime.strptime(row['Fecha-I'], '%Y-%m-%d %H:%M:%S')
+            fecha_o = datetime.strptime(row["Fecha-O"], "%Y-%m-%d %H:%M:%S")
+            fecha_i = datetime.strptime(row["Fecha-I"], "%Y-%m-%d %H:%M:%S")
             min_diff = ((fecha_o - fecha_i).total_seconds()) / 60
             return min_diff
         except (ValueError, KeyError, AttributeError):
             return 0.0  # Default to no difference for invalid data
 
     def preprocess(
-        self,
-        data: pd.DataFrame,
-        target_column: str = None
+        self, data: pd.DataFrame, target_column: str = None
     ) -> Union[Tuple[pd.DataFrame, pd.DataFrame], pd.DataFrame]:
         """
         Prepare raw data for training or predict.
@@ -138,30 +137,38 @@ class DelayModel:
         data_processed = data.copy()
 
         # Feature engineering
-        if 'Fecha-I' in data_processed.columns:
-            data_processed['period_day'] = data_processed['Fecha-I'].apply(self._get_period_day)
-            data_processed['high_season'] = data_processed['Fecha-I'].apply(self._is_high_season)
+        if "Fecha-I" in data_processed.columns:
+            data_processed["period_day"] = data_processed["Fecha-I"].apply(
+                self._get_period_day
+            )
+            data_processed["high_season"] = data_processed["Fecha-I"].apply(
+                self._is_high_season
+            )
 
-        if 'Fecha-O' in data_processed.columns and 'Fecha-I' in data_processed.columns:
-            data_processed['min_diff'] = data_processed.apply(self._get_min_diff, axis=1)
-            data_processed['delay'] = np.where(data_processed['min_diff'] > 15, 1, 0)
+        if "Fecha-O" in data_processed.columns and "Fecha-I" in data_processed.columns:
+            data_processed["min_diff"] = data_processed.apply(
+                self._get_min_diff, axis=1
+            )
+            data_processed["delay"] = np.where(data_processed["min_diff"] > 15, 1, 0)
 
         # Create dummy variables for categorical features
         features = pd.DataFrame(index=data_processed.index)
 
         # Handle OPERA column
-        if 'OPERA' in data_processed.columns:
-            opera_dummies = pd.get_dummies(data_processed['OPERA'], prefix='OPERA')
+        if "OPERA" in data_processed.columns:
+            opera_dummies = pd.get_dummies(data_processed["OPERA"], prefix="OPERA")
             features = pd.concat([features, opera_dummies], axis=1)
 
         # Handle TIPOVUELO column
-        if 'TIPOVUELO' in data_processed.columns:
-            tipovuelo_dummies = pd.get_dummies(data_processed['TIPOVUELO'], prefix='TIPOVUELO')
+        if "TIPOVUELO" in data_processed.columns:
+            tipovuelo_dummies = pd.get_dummies(
+                data_processed["TIPOVUELO"], prefix="TIPOVUELO"
+            )
             features = pd.concat([features, tipovuelo_dummies], axis=1)
 
         # Handle MES column
-        if 'MES' in data_processed.columns:
-            mes_dummies = pd.get_dummies(data_processed['MES'], prefix='MES')
+        if "MES" in data_processed.columns:
+            mes_dummies = pd.get_dummies(data_processed["MES"], prefix="MES")
             features = pd.concat([features, mes_dummies], axis=1)
 
         # Ensure all expected top features are present (fill with 0 if missing)
@@ -178,11 +185,7 @@ class DelayModel:
         else:
             return features
 
-    def fit(
-        self,
-        features: pd.DataFrame,
-        target: pd.DataFrame
-    ) -> None:
+    def fit(self, features: pd.DataFrame, target: pd.DataFrame) -> None:
         """
         Fit model with preprocessed data.
 
@@ -200,17 +203,12 @@ class DelayModel:
 
         # Train XGBoost model with class balancing
         self._model = xgb.XGBClassifier(
-            random_state=1,
-            learning_rate=0.01,
-            scale_pos_weight=scale_pos_weight
+            random_state=1, learning_rate=0.01, scale_pos_weight=scale_pos_weight
         )
 
         self._model.fit(features_shuffled, target_shuffled.values.ravel())
 
-    def predict(
-        self,
-        features: pd.DataFrame
-    ) -> List[int]:
+    def predict(self, features: pd.DataFrame) -> List[int]:
         """
         Predict delays for new flights.
 
