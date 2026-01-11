@@ -1,0 +1,57 @@
+steps:
+  # Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/${_PROJECT_ID}/latam-challenge-api:${COMMIT_SHA}'
+      - '.'
+
+  # Push the Docker image to GCR
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/${_PROJECT_ID}/latam-challenge-api:${COMMIT_SHA}'
+
+  # Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'latam-challenge-api'
+      - '--image'
+      - 'gcr.io/${_PROJECT_ID}/latam-challenge-api:${COMMIT_SHA}'
+      - '--region'
+      - '${_REGION}'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--port'
+      - '8000'
+      - '--memory'
+      - '1Gi'
+      - '--cpu'
+      - '1'
+      - '--min-instances'
+      - '0'
+      - '--max-instances'
+      - '10'
+
+# Add a step to output the service URL after deployment
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'services'
+      - 'describe'
+      - 'latam-challenge-api'
+      - '--region=${_REGION}'
+      - '--format=🚀 Service URL: value(status.url)'
+
+substitutions:
+  _PROJECT_ID: ${PROJECT_ID}  # Will be set by environment or gcloud config
+  _REGION: us-central1
+
+options:
+  substitution_option: 'ALLOW_LOOSE'
