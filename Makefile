@@ -23,7 +23,8 @@ install:		## Install dependencies
 	pip install -r requirements-test.txt
 	pip install -r requirements.txt
 
-STRESS_URL = http://127.0.0.1:8000 
+# Update this with your deployed Cloud Run URL after deployment
+STRESS_URL = https://latam-challenge-api-[PROJECT-ID].[REGION].run.app 
 .PHONY: stress-test
 stress-test:
 	# change stress url to your deployed app 
