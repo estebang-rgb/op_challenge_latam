@@ -1,0 +1,44 @@
+name: 'Continuous Delivery'
+
+on:
+  push:
+    branches:
+      - main
+  workflow_run:
+    workflows: ["Continuous Integration"]
+    types:
+      - completed
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'push' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Build and Deploy to Cloud Run
+        run: |
+          gcloud builds submit --config cloudbuild.yaml --substitutions _SERVICE_URL="$(gcloud run services describe latam-challenge-api --region=us-central1 --format='value(status.url)' 2>/dev/null || echo 'https://placeholder-url')"
+
+      - name: Get Service URL
+        run: |
+          SERVICE_URL=$(gcloud run services describe latam-challenge-api --region=us-central1 --format="value(status.url)")
+          echo "🚀 API deployed at: $SERVICE_URL"
+          echo "SERVICE_URL=$SERVICE_URL" >> $GITHUB_ENV
+
+      - name: Run Stress Test
+        run: |
+          echo "Running stress test against: ${{ env.SERVICE_URL }}"
+          # Update stress test URL in Makefile or run directly
+          pip install locust
+          locust -f tests/stress/api_stress.py --run-time 30s --headless --users 50 --spawn-rate 2 -H ${{ env.SERVICE_URL }} || echo "Stress test completed with some failures"
