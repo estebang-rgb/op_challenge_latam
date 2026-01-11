@@ -50,7 +50,7 @@ steps:
       - '--format=🚀 Service URL: value(status.url)'
 
 substitutions:
-  _PROJECT_ID: ${PROJECT_ID}  # Will be set by environment or gcloud config
+  _PROJECT_ID: latamoption-484022
   _REGION: us-central1
 
 options:
