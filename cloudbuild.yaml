@@ -54,5 +54,4 @@ substitutions:
   _REGION: us-central1
 
 options:
-  serviceAccount: 'github-actions-deploy@latamoption-484022.iam.gserviceaccount.com'
   substitution_option: 'ALLOW_LOOSE'
