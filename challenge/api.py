@@ -1,7 +1,7 @@
 import fastapi
 import pandas as pd
 from typing import List, Dict, Any
-from pydantic import BaseModel, field_validator, ValidationError
+from pydantic import BaseModel
 
 from challenge.model import DelayModel
 
