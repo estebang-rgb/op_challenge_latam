@@ -43,7 +43,7 @@ jobs:
       run: make api-test
 
     - name: Upload coverage reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: coverage-reports
         path: reports/
@@ -76,29 +76,3 @@ jobs:
 
     - name: Check import sorting with isort
       run: isort --check-only --diff challenge
-
-  build:
-    runs-on: ubuntu-latest
-    needs: [test, lint]
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install build
-
-    - name: Build package
-      run: python -m build
-
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: dist
-        path: dist/
