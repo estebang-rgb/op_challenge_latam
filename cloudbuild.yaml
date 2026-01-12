@@ -47,7 +47,7 @@ steps:
       - 'describe'
       - 'latam-challenge-api'
       - '--region=${_REGION}'
-      - '--format=🚀 Service URL: value(status.url)'
+      - '--format=value(status.url)'
 
 substitutions:
   _PROJECT_ID: latamoption-484022
