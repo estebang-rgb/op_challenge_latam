@@ -4,14 +4,14 @@ steps:
     args:
       - 'build'
       - '-t'
-      - 'gcr.io/${_PROJECT_ID}/latam-challenge-api:${COMMIT_SHA}'
+      - 'gcr.io/${_PROJECT_ID}/latam-challenge-api:${_TAG}'
       - '.'
 
   # Push the Docker image to GCR
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - 'gcr.io/${_PROJECT_ID}/latam-challenge-api:${COMMIT_SHA}'
+      - 'gcr.io/${_PROJECT_ID}/latam-challenge-api:${_TAG}'
 
   # Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -21,7 +21,7 @@ steps:
       - 'deploy'
       - 'latam-challenge-api'
       - '--image'
-      - 'gcr.io/${_PROJECT_ID}/latam-challenge-api:${COMMIT_SHA}'
+      - 'gcr.io/${_PROJECT_ID}/latam-challenge-api:${_TAG}'
       - '--region'
       - '${_REGION}'
       - '--platform'
@@ -47,11 +47,12 @@ steps:
       - 'describe'
       - 'latam-challenge-api'
       - '--region=${_REGION}'
-      - '--format=🚀 Service URL: value(status.url)'
+      - '--format=value(status.url)'
 
 substitutions:
   _PROJECT_ID: latamoption-484022
   _REGION: us-central1
+  _TAG: v1
 
 options:
   substitution_option: 'ALLOW_LOOSE'
