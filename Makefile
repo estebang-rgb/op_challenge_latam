@@ -24,10 +24,10 @@ install:		## Install dependencies
 	pip install -r requirements.txt
 
 # Update this with your deployed Cloud Run URL after deployment
-STRESS_URL = https://latam-challenge-api-[PROJECT-ID].[REGION].run.app 
+STRESS_URL = http://latam-challenge-api-682762920072.us-central1.run.app
 .PHONY: stress-test
 stress-test:
-	# change stress url to your deployed app 
+	# change stress url to your deployed app
 	mkdir reports || true
 	locust -f tests/stress/api_stress.py --print-stats --html reports/stress-test.html --run-time 60s --headless --users 100 --spawn-rate 1 -H $(STRESS_URL)
 
